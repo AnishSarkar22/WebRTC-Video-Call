@@ -66,8 +66,8 @@ graph TB
 1. **Clone the repository**
 
    ```bash
-   git clone <repository-url>
-   cd spring-boot-webrtc-peer2peer
+   git clone https://github.com/AnishSarkar22/WebRTC-Video-Call.git
+   cd WebRTC-Video-Call
    ```
 
 2. **Update IP configuration**
