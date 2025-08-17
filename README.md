@@ -38,11 +38,6 @@ graph TB
     G --> H
     B --> I
     
-    classDef client fill:#e1f5fe
-    classDef server fill:#f3e5f5
-    classDef proxy fill:#e8f5e8
-    classDef external fill:#fff3e0
-    
     class A,B,C client
     class F,G,H server
     class D,E proxy
