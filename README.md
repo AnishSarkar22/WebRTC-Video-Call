@@ -83,13 +83,24 @@ graph TB
      set $ip_address <YOUR_IP>; # Replace with your IP
      ```
 
-3. **Start the application**
+3. **Create SSL certificates for local development**
+
+   The application requires SSL certificates for HTTPS/WebRTC. For local development, generate self-signed certificates with:
+
+   ```bash
+   mkdir ssl
+   openssl req -x509 -newkey rsa:4096 -keyout ssl/private_key.pem -out ssl/certificate.pem -days 365 -nodes
+   ```
+
+   This will create the `ssl/` directory and the necessary certificate files.
+
+4. **Start the application**
 
    ```bash
    docker-compose up --build
    ```
 
-4. **Access the application**
+5. **Access the application**
    - HTTP: `http://YOUR_IP`
    - HTTPS: `https://YOUR_IP`
 
@@ -154,10 +165,12 @@ server.address=0.0.0.0
 
 ## 🔒 SSL Configuration
 
-The application includes self-signed certificates in the [`ssl/`](ssl/) directory. For production, replace with proper SSL certificates:
+The application includes self-signed certificates in the [`ssl/`](ssl/) directory. For production, replace with proper SSL certificates.
+
+To generate self-signed certificates for local development, run:
 
 ```bash
-# Generate new certificates
+mkdir ssl
 openssl req -x509 -newkey rsa:4096 -keyout ssl/private_key.pem -out ssl/certificate.pem -days 365 -nodes
 ```
 
