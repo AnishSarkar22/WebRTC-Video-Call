@@ -1,5 +1,7 @@
 import { Client } from '@stomp/stompjs';
 
+const WEBSOCKET_URL = import.meta.env.VITE_WEBSOCKET_URL || 'ws://localhost:8080/ws';
+
 export interface BaseMessage {
     type: string;
     roomId: string;
@@ -43,7 +45,6 @@ export interface ErrorMessage extends BaseMessage {
     errorCode: string;
 }
 
-// Add missing RoomUsersMessage interface
 export interface RoomUsersMessage extends BaseMessage {
     type: 'ROOM_USERS';
     userIds: string[];
@@ -75,12 +76,12 @@ class WebSocketService {
     messages = $state<WebSocketMessage[]>([]);
     errors = $state<ErrorMessage[]>([]);
 
-    // Message handlers that can be set from components
+    // Message handlers
     private messageHandlers = new Set<(message: WebSocketMessage) => void>();
 
     constructor() {
         this.client = new Client({
-            brokerURL: 'ws://localhost:8080/ws',
+            brokerURL: WEBSOCKET_URL,
             connectHeaders: {},
             debug: (str) => {
                 console.log('STOMP Debug:', str);
@@ -93,7 +94,6 @@ class WebSocketService {
         this.client.onConnect = (frame) => {
             console.log('Connected:', frame);
             this.connected = true;
-            // Don't subscribe immediately - wait for roomId to be set
         };
 
         this.client.onDisconnect = () => {
@@ -106,12 +106,10 @@ class WebSocketService {
         };
     }
 
-    // Method to add message handlers
     addMessageHandler(handler: (message: WebSocketMessage) => void) {
         this.messageHandlers.add(handler);
     }
 
-    // Method to remove message handlers
     removeMessageHandler(handler: (message: WebSocketMessage) => void) {
         this.messageHandlers.delete(handler);
     }
@@ -135,38 +133,23 @@ class WebSocketService {
     private subscribeToTopics() {
         if (!this.client || !this.connected || !this.roomId) return;
 
-        console.log('Subscribing to topics for room:', this.roomId);
+        console.log('Subscribing to room topic:', this.roomId);
 
-        // Subscribe to room updates
+        // Subscribe to room updates - ALL messages come through here now
         this.client.subscribe(`/topic/room/${this.roomId}`, (message) => {
             const data: WebSocketMessage = JSON.parse(message.body);
-            this.handleMessage(data);
-        });
-
-        // Subscribe to private messages
-        this.client.subscribe('/user/queue/offer', (message) => {
-            const data: OfferMessage = JSON.parse(message.body);
-            this.handleMessage(data);
-        });
-
-        this.client.subscribe('/user/queue/answer', (message) => {
-            const data: AnswerMessage = JSON.parse(message.body);
-            this.handleMessage(data);
-        });
-
-        this.client.subscribe('/user/queue/ice-candidate', (message) => {
-            const data: IceCandidateMessage = JSON.parse(message.body);
-            this.handleMessage(data);
-        });
-
-        this.client.subscribe('/user/queue/error', (message) => {
-            const data: ErrorMessage = JSON.parse(message.body);
-            this.handleMessage(data);
+            
+            // Filter messages: only handle if it's for everyone OR specifically for this user
+            if (!data.targetUserId || data.targetUserId === this.userId) {
+                this.handleMessage(data);
+            } else {
+                console.log('Ignoring message not for this user:', data.type, 'from:', data.userId, 'to:', data.targetUserId);
+            }
         });
     }
 
     private handleMessage(message: WebSocketMessage) {
-        console.log('Received message:', message);
+        console.log('Handling message:', message.type, 'from:', message.userId, 'to:', message.targetUserId || 'everyone');
         this.messages.push(message);
 
         // Call all registered message handlers
@@ -200,6 +183,7 @@ class WebSocketService {
                 this.errors = [...this.errors, errorMsg];
                 break;
             }
+
             case 'ROOM_USERS': {
                 const roomUsersMsg = message as RoomUsersMessage;
                 this.users = [...roomUsersMsg.userIds];
@@ -230,6 +214,7 @@ class WebSocketService {
             timestamp: Date.now()
         };
 
+        console.log('Sending join room message:', message);
         this.client.publish({
             destination: '/app/join',
             body: JSON.stringify(message)
@@ -264,6 +249,7 @@ class WebSocketService {
             timestamp: Date.now()
         };
 
+        console.log('Sending offer to:', targetUserId);
         this.client.publish({
             destination: '/app/offer',
             body: JSON.stringify(message)
@@ -282,6 +268,7 @@ class WebSocketService {
             timestamp: Date.now()
         };
 
+        console.log('Sending answer to:', targetUserId);
         this.client.publish({
             destination: '/app/answer',
             body: JSON.stringify(message)

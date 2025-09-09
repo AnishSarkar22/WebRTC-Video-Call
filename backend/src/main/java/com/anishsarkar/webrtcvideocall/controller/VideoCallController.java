@@ -34,24 +34,23 @@ public class VideoCallController {
 
             logger.info("User {} joining room {}", userId, roomId);
 
-            // Store session attributes with null check
+            // Store session attributes
             Map<String, Object> sessionAttributes = headerAccessor.getSessionAttributes();
             if (sessionAttributes != null) {
                 sessionAttributes.put("roomId", roomId);
                 sessionAttributes.put("userId", userId);
-            } else {
-                logger.warn("Session attributes are null for user {} joining room {}", userId, roomId);
             }
 
             // Join the room
             roomService.joinRoom(roomId, userId, userName);
 
-            // Notify other users in the room
-            UserJoinedMessage userJoinedMessage = new UserJoinedMessage(roomId, userId, userName);
-            messagingTemplate.convertAndSend("/topic/room/" + roomId, userJoinedMessage);
-
+            // Send current room users to the new user first
             RoomUsersMessage roomUsersMessage = new RoomUsersMessage(roomId, roomService.getRoomUsers(roomId));
             messagingTemplate.convertAndSend("/topic/room/" + roomId, roomUsersMessage);
+
+            // Then notify others that a new user joined
+            UserJoinedMessage userJoinedMessage = new UserJoinedMessage(roomId, userId, userName);
+            messagingTemplate.convertAndSend("/topic/room/" + roomId, userJoinedMessage);
 
             logger.info("User {} successfully joined room {}. Room size: {}", 
                        userId, roomId, roomService.getRoomSize(roomId));
@@ -78,6 +77,7 @@ public class VideoCallController {
             UserLeftMessage userLeftMessage = new UserLeftMessage(roomId, userId);
             messagingTemplate.convertAndSend("/topic/room/" + roomId, userLeftMessage);
 
+            // Send updated room users list
             RoomUsersMessage roomUsersMessage = new RoomUsersMessage(roomId, roomService.getRoomUsers(roomId));
             messagingTemplate.convertAndSend("/topic/room/" + roomId, roomUsersMessage);
 
@@ -104,10 +104,10 @@ public class VideoCallController {
                 return;
             }
 
-            // Forward the offer to the target user
-            messagingTemplate.convertAndSendToUser(targetUserId, "/queue/offer", message);
+            // Send to the room topic - frontend will filter by targetUserId
+            messagingTemplate.convertAndSend("/topic/room/" + roomId, message);
 
-            logger.info("Offer forwarded from {} to {}", userId, targetUserId);
+            logger.info("Offer forwarded from {} to {} in room {}", userId, targetUserId, roomId);
 
         } catch (Exception e) {
             logger.error("Error handling offer", e);
@@ -130,10 +130,10 @@ public class VideoCallController {
                 return;
             }
 
-            // Forward the answer to the target user
-            messagingTemplate.convertAndSendToUser(targetUserId, "/queue/answer", message);
+            // Send to the room topic - frontend will filter by targetUserId
+            messagingTemplate.convertAndSend("/topic/room/" + roomId, message);
 
-            logger.info("Answer forwarded from {} to {}", userId, targetUserId);
+            logger.info("Answer forwarded from {} to {} in room {}", userId, targetUserId, roomId);
 
         } catch (Exception e) {
             logger.error("Error handling answer", e);
@@ -156,8 +156,10 @@ public class VideoCallController {
                 return;
             }
 
-            // Forward the ICE candidate to the target user
-            messagingTemplate.convertAndSendToUser(targetUserId, "/queue/ice-candidate", message);
+            // Send to the room topic - frontend will filter by targetUserId
+            messagingTemplate.convertAndSend("/topic/room/" + roomId, message);
+
+            logger.info("ICE candidate forwarded from {} to {} in room {}", userId, targetUserId, roomId);
 
         } catch (Exception e) {
             logger.error("Error handling ICE candidate", e);
@@ -168,6 +170,6 @@ public class VideoCallController {
 
     private void sendErrorMessage(String roomId, String userId, String errorMessage, String errorCode) {
         ErrorMessage error = new ErrorMessage(roomId, userId, errorMessage, errorCode);
-        messagingTemplate.convertAndSendToUser(userId, "/queue/error", error);
+        messagingTemplate.convertAndSend("/topic/room/" + roomId, error);
     }
 }
