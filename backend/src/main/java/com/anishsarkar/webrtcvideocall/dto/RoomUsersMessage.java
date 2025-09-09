@@ -1,9 +1,10 @@
 package com.anishsarkar.webrtcvideocall.dto;
 
+import java.util.List;
 import java.util.Set;
 
 public class RoomUsersMessage extends BaseMessage {
-    private Set<String> userIds;
+    private List<String> userIds;
 
     public RoomUsersMessage() {
         super(MessageType.ROOM_USERS, null, null);
@@ -11,9 +12,9 @@ public class RoomUsersMessage extends BaseMessage {
 
     public RoomUsersMessage(String roomId, Set<String> userIds) {
         super(MessageType.ROOM_USERS, roomId, null);
-        this.userIds = userIds;
+        this.userIds = userIds.stream().toList();
     }
 
-    public Set<String> getUserIds() { return userIds; }
-    public void setUserIds(Set<String> userIds) { this.userIds = userIds; }
+    public List<String> getUserIds() { return userIds; }
+    public void setUserIds(List<String> userIds) { this.userIds = userIds; }
 }
