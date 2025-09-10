@@ -1,67 +1,90 @@
-# WebRTC Spring Boot Video Call Application
+# WebRTC Video Call Application
 
-A peer-to-peer video calling application built with Spring Boot, WebRTC, Socket.IO, and Docker. Features real-time video/audio communication with a clean web interface.
+A peer-to-peer video calling application built with **SvelteKit** (frontend), **Spring Boot** (backend), and **Nginx** (reverse proxy). Features real-time video/audio communication with a modern web interface, secure HTTPS, and Dockerized deployment.
 
-> **Note:** This application allows multiple rooms, but each room is strictly for a 1:1 video call. Multiple participants per room are not supported.
+> **Note:** Each room supports only 1:1 video calls. Multiple participants per room are not supported.
+
+---
 
 ## 🏗️ Architecture
 
 ```mermaid
-graph TB
-    subgraph "Client Browser"
-        A[Web Interface<br/>HTML/CSS/JS]
+flowchart TD
+    subgraph Client
+        A[Web Interface<br>(Svelte 5)]
         B[WebRTC API]
-        C[Socket.IO Client]
+        C[STOMP/WebSocket Client]
     end
-    
-    subgraph "Docker Container Network"
-        subgraph "Nginx Proxy"
-            D[Nginx<br/>Port 80/443]
-            E[SSL Termination]
-        end
-        
-        subgraph "Spring Boot App"
-            F[Spring Boot<br/>Port 8080]
-            G[Socket.IO Server<br/>Port 8000]
-            H[WebSocket Handler]
-        end
+
+    subgraph Docker_Network
+        D[Nginx<br>80/443]
+        E[Spring Boot Backend<br>8000]
+        F[SvelteKit Frontend<br>3000]
     end
-    
-    subgraph "External Services"
-        I[STUN/TURN Server<br/>Port 3478]
+
+    subgraph External
+        G[STUN/TURN Server<br>3478]
     end
-    
-    A --> D
-    C --> D
-    D --> F
-    D --> G
-    G --> H
-    B --> I
-    
-    class A,B,C client
-    class F,G,H server
-    class D,E proxy
-    class I external
+
+    A -- HTTP/WS --> D
+    C -- WebSocket --> D
+    D -- Proxy HTTP/WS --> E
+    D -- Serve Static --> F
+    B -- WebRTC --> G
 ```
+
+---
 
 ## 🚀 Features
 
-- **Real-time Video Calls**: Peer-to-peer communication using WebRTC
-- **Audio/Video Controls**: Toggle camera and microphone
-- **Room-based Calls**: Join specific rooms for private conversations
-- **SSL Support**: Secure HTTPS connections with custom certificates
-- **Docker Deployment**: Containerized application with Nginx reverse proxy
-- **Responsive UI**: Bootstrap-based interface
+- **Real-time Video Calls**: Peer-to-peer via WebRTC
+- **Room-based Calls**: Private rooms for 1:1 conversations
+- **Modern UI**: Built with SvelteKit
+- **SSL Support**: Secure HTTPS via Nginx and custom certificates
+- **Dockerized**: Easy deployment with Docker Compose
+- **Responsive Design**: Works on desktop and mobile
+
+---
+
+## 📁 Project Structure
+
+```text
+WebRTC-Video-Call/
+│
+├── backend/                # Spring Boot backend (Java)
+│   ├── src/
+│   ├── pom.xml
+│   └── Dockerfile
+│
+├── frontend/               # SvelteKit frontend (TypeScript)
+│   ├── src/
+│   ├── package.json
+│   ├── Dockerfile
+│   └── .env.example
+│
+├── nginx/                  # Nginx reverse proxy config
+│   ├── nginx.conf
+│   ├── Dockerfile
+│   └── ssl/
+│       ├── certificate.pem
+│       └── private_key.pem
+│
+├── docker-compose.yml      # Multi-service orchestration
+└── README.md
+```
+
+---
 
 ## 📋 Prerequisites
 
 - Docker & Docker Compose
-- Java 17+ (for local development)
-- Maven 3.9+ (for local development)
+- Java 21+ (for backend local development)
+- Node.js 24+ (for frontend local development)
+- Maven 3.9+ (for backend local development)
 
-## 🛠️ Quick Start
+---
 
-### Using Docker (Recommended)
+## 🛠️ Quick Start (Docker Compose)
 
 1. **Clone the repository**
 
@@ -70,134 +93,125 @@ graph TB
    cd WebRTC-Video-Call
    ```
 
-2. **Update IP configuration**
-   - Edit [`src/main/resources/static/client.js`](src/main/resources/static/client.js) line 1:
+2. **Configure Environment**
 
-     ```javascript
-     const LOCAL_IP_ADDRESS = "YOUR_IP"; // Replace with your IP
+   - Edit `frontend/.env` (copy from `.env.example`) and set your WebSocket URL if needed:
      ```
-
-   - Edit [`nginx/nginx.conf`](nginx/nginx.conf) line 3 and 10:
-
-     ```nginx
-     set $ip_address <YOUR_IP>; # Replace with your IP
+     VITE_WEBSOCKET_URL=wss://your-domain.com/ws
      ```
+   - Edit `nginx/nginx.conf` and set your domain or use `server_name _;` for all hosts.
 
-3. **Create SSL certificates for local development**
-
-   The application requires SSL certificates for HTTPS/WebRTC. For local development, generate self-signed certificates with:
+3. **Create SSL Certificates (for HTTPS)**
 
    ```bash
-   mkdir ssl
-   openssl req -x509 -newkey rsa:4096 -keyout ssl/private_key.pem -out ssl/certificate.pem -days 365 -nodes
+   mkdir -p nginx/ssl
+   openssl req -x509 -newkey rsa:4096 -keyout nginx/ssl/private_key.pem -out nginx/ssl/certificate.pem -days 365 -nodes
    ```
 
-   This will create the `ssl/` directory and the necessary certificate files.
-
-4. **Start the application**
+4. **Build and Start All Services**
 
    ```bash
    docker-compose up --build
    ```
 
-5. **Access the application**
-   - HTTP: `http://YOUR_IP`
-   - HTTPS: `https://YOUR_IP`
+5. **Access the Application**
 
-### Local Development
+   - HTTP: `http://localhost`
+   - HTTPS: `https://localhost`
 
-1. **Build and run**
-
-   ```bash
-   ./mvnw clean package
-   ./mvnw spring-boot:run
-   ```
-
-2. **Access at** `http://localhost:8080`
+---
 
 ## 🔧 Configuration
 
-### Application Properties
-
-[`src/main/resources/application.properties`](src/main/resources/application.properties)
+### Backend (`backend/src/main/resources/application.properties`)
 
 ```properties
 socket.host=0.0.0.0
 socket.port=8000
+server.port=8000
 server.address=0.0.0.0
 ```
 
-### Docker Configuration
+### Frontend (`frontend/.env`)
 
-- **Spring Boot**: Runs on ports 8080 (HTTP) and 8000 (Socket.IO)
-- **Nginx**: Reverse proxy on ports 80/443 with SSL termination
-- **SSL Certificates**: Located in [`ssl/`](ssl/) directory
-
-## 📁 Project Structure
-
-```text
-├── src/main/java/com/anishsarkar/webrtcvideocall/
-│   ├── WebRTCApplication.java          # Main application class
-│   ├── SocketHandler.java              # WebSocket event handler
-│   ├── WebSocketConfig.java            # Socket.IO configuration
-│   └── WebConfiguration.java           # Web MVC configuration
-├── src/main/resources/static/
-│   ├── index.html                      # Main UI
-│   ├── client.js                       # WebRTC client logic
-│   └── style.css                       # UI styles
-├── nginx/                              # Nginx configuration
-├── ssl/                                # SSL certificates
-└── docker-compose.yml                 # Docker orchestration
+```env
+VITE_WEBSOCKET_URL=wss://your-domain.com/ws
 ```
+
+### Nginx (`nginx/nginx.conf`)
+
+- Proxies `/ws` and API requests to backend (`backend:8000`)
+- Serves frontend static files or proxies to frontend container (`frontend:3000`, `4173`, or `5173`)
+
+---
+
+## 🐳 Docker Compose Overview
+
+- **backend**: Spring Boot app on port 8000
+- **frontend**: SvelteKit app (dev: 5173, preview: 4173, prod: 3000)
+- **nginx**: Reverse proxy on 80/443, SSL termination, static file serving
+
+---
 
 ## 🔌 Key Components
 
 ### Backend
 
-- **[`SocketHandler`](src/main/java/com/anishsarkar/webrtcvideocall/SocketHandler.java)**: Manages WebSocket connections and room operations
-- **[`WebSocketConfig`](src/main/java/com/anishsarkar/webrtcvideocall/WebSocketConfig.java)**: Configures Socket.IO server
-- **[`WebConfiguration`](src/main/java/com/anishsarkar/webrtcvideocall/WebConfiguration.java)**: Sets up CORS and view controllers
+- **Spring Boot**: REST API & WebSocket (STOMP) signaling server
+- **RoomService**: Manages room membership and signaling
+- **WebSocketConfig**: Configures STOMP endpoints
 
 ### Frontend
 
-- **[`client.js`](src/main/resources/static/client.js)**: WebRTC peer connection management
-- **[`index.html`](src/main/resources/static/index.html)**: Bootstrap-based responsive UI
+- **SvelteKit**: Modern reactive UI
+- **websocket.svelte.ts**: Handles STOMP/WebSocket signaling
+- **webrtc.svelte.ts**: Manages WebRTC peer connections
 
-## 🔒 SSL Configuration
-
-The application includes self-signed certificates in the [`ssl/`](ssl/) directory. For production, replace with proper SSL certificates.
-
-To generate self-signed certificates for local development, run:
-
-```bash
-mkdir ssl
-openssl req -x509 -newkey rsa:4096 -keyout ssl/private_key.pem -out ssl/certificate.pem -days 365 -nodes
-```
+---
 
 ## 🧪 Testing
 
-Run tests with Maven:
+### Backend
 
 ```bash
+cd backend
 ./mvnw test
 ```
 
-Test results are available in [`target/surefire-reports/`](target/surefire-reports/).
+### Frontend
 
-## 📦 Dependencies
+```bash
+cd frontend
+npm install
+npm run test
+```
 
-- **Spring Boot 3.2.6**: Web framework
-- **Netty Socket.IO 1.7.23**: Real-time communication
-- **Lombok 1.18.32**: Code generation
-- **Bootstrap 5.3**: UI framework
+---
 
 ## 🤝 Usage
 
-1. Open the application in your browser
-2. Enter a room name and click "Connect"
-3. Share the room name with another user
-4. Both users will automatically connect via WebRTC
-5. Use the camera/microphone buttons to control media
+1. Open the app in your browser.
+2. Create or join a room.
+3. Share the room ID with another user.
+4. Both users connect via WebRTC for a 1:1 video call.
+
+---
+
+## 🔒 SSL Configuration
+
+- Self-signed certificates for local development are in `nginx/ssl/`.
+- For production, replace with certificates from a trusted CA.
+
+---
+
+## 📦 Dependencies
+
+- **Spring Boot 3.2.6**
+- **Svelte 5 and Sveltekit**
+- **STOMP/WebSocket**
+- **Nginx**
+
+---
 
 ## 📄 License
 
