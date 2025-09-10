@@ -1,8 +1,8 @@
 # WebRTC Video Call Application
 
-A peer-to-peer video calling application built with **SvelteKit** (frontend), **Spring Boot** (backend), and **Nginx** (reverse proxy). Features real-time video/audio communication with a modern web interface, secure HTTPS, and Dockerized deployment.
+A peer-to-peer group video calling application built with **SvelteKit** (frontend), **Spring Boot** (backend), and **Nginx** (reverse proxy). Features real-time video/audio communication (full mesh) with secure HTTPS, and Dockerized deployment.
 
-> **Note:** Each room supports only 1:1 video calls. Multiple participants per room are not supported.
+> **Note:** Each room also supports multiple participants. All users in a room will connect to each other in a full mesh for group video calls.
 
 ## 🏗️ Architecture
 
@@ -34,7 +34,7 @@ flowchart TD
 ## 🚀 Features
 
 - **Real-time Video Calls**: Peer-to-peer via WebRTC
-- **Room-based Calls**: Private rooms for 1:1 conversations
+- **Room-based Calls**: Private rooms for group video calls (full mesh)
 - **Modern UI**: Built with SvelteKit
 - **SSL Support**: Secure HTTPS via Nginx and custom certificates
 - **Dockerized**: Easy deployment with Docker Compose
@@ -172,8 +172,8 @@ npm run test
 
 1. Open the app in your browser.
 2. Create or join a room.
-3. Share the room ID with another user.
-4. Both users connect via WebRTC for a 1:1 video call.
+3. Share the room ID with other users.
+4. All users in the room will connect to each other for a group video call.
 
 ## 🔒 SSL Configuration
 
