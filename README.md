@@ -4,14 +4,12 @@ A peer-to-peer video calling application built with **SvelteKit** (frontend), **
 
 > **Note:** Each room supports only 1:1 video calls. Multiple participants per room are not supported.
 
----
-
 ## 🏗️ Architecture
 
 ```mermaid
 flowchart TD
     subgraph Client
-        A[Web Interface<br>(Svelte 5)]
+        A[Web Interface<br>Svelte 5]
         B[WebRTC API]
         C[STOMP/WebSocket Client]
     end
@@ -33,8 +31,6 @@ flowchart TD
     B -- WebRTC --> G
 ```
 
----
-
 ## 🚀 Features
 
 - **Real-time Video Calls**: Peer-to-peer via WebRTC
@@ -43,8 +39,6 @@ flowchart TD
 - **SSL Support**: Secure HTTPS via Nginx and custom certificates
 - **Dockerized**: Easy deployment with Docker Compose
 - **Responsive Design**: Works on desktop and mobile
-
----
 
 ## 📁 Project Structure
 
@@ -73,16 +67,12 @@ WebRTC-Video-Call/
 └── README.md
 ```
 
----
-
 ## 📋 Prerequisites
 
 - Docker & Docker Compose
 - Java 21+ (for backend local development)
 - Node.js 24+ (for frontend local development)
 - Maven 3.9+ (for backend local development)
-
----
 
 ## 🛠️ Quick Start (Docker Compose)
 
@@ -119,8 +109,6 @@ WebRTC-Video-Call/
    - HTTP: `http://localhost`
    - HTTPS: `https://localhost`
 
----
-
 ## 🔧 Configuration
 
 ### Backend (`backend/src/main/resources/application.properties`)
@@ -143,15 +131,11 @@ VITE_WEBSOCKET_URL=wss://your-domain.com/ws
 - Proxies `/ws` and API requests to backend (`backend:8000`)
 - Serves frontend static files or proxies to frontend container (`frontend:3000`, `4173`, or `5173`)
 
----
-
 ## 🐳 Docker Compose Overview
 
 - **backend**: Spring Boot app on port 8000
 - **frontend**: SvelteKit app (dev: 5173, preview: 4173, prod: 3000)
 - **nginx**: Reverse proxy on 80/443, SSL termination, static file serving
-
----
 
 ## 🔌 Key Components
 
@@ -166,8 +150,6 @@ VITE_WEBSOCKET_URL=wss://your-domain.com/ws
 - **SvelteKit**: Modern reactive UI
 - **websocket.svelte.ts**: Handles STOMP/WebSocket signaling
 - **webrtc.svelte.ts**: Manages WebRTC peer connections
-
----
 
 ## 🧪 Testing
 
@@ -186,8 +168,6 @@ npm install
 npm run test
 ```
 
----
-
 ## 🤝 Usage
 
 1. Open the app in your browser.
@@ -195,14 +175,10 @@ npm run test
 3. Share the room ID with another user.
 4. Both users connect via WebRTC for a 1:1 video call.
 
----
-
 ## 🔒 SSL Configuration
 
 - Self-signed certificates for local development are in `nginx/ssl/`.
 - For production, replace with certificates from a trusted CA.
-
----
 
 ## 📦 Dependencies
 
@@ -210,8 +186,6 @@ npm run test
 - **Svelte 5 and Sveltekit**
 - **STOMP/WebSocket**
 - **Nginx**
-
----
 
 ## 📄 License
 
