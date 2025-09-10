@@ -1,6 +1,6 @@
 import { Client } from '@stomp/stompjs';
 
-const WEBSOCKET_URL = import.meta.env.VITE_WEBSOCKET_URL || 'ws://localhost:8080/ws';
+const WEBSOCKET_URL = import.meta.env.VITE_WEBSOCKET_URL || 'ws://localhost:8000/ws';
 
 export interface BaseMessage {
     type: string;

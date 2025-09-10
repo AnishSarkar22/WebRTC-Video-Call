@@ -13,7 +13,7 @@
   
   <groupId>com.anishsarkar</groupId>
   <artifactId>WebRTC-VideoCall</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>1.0.0</version>
   <name>WebRTC-VideoCall</name>
   <description>Spring Boot WebRTC peer-to-peer video call application with Docker and Nginx reverse proxy.</description>
 
@@ -81,5 +81,6 @@
         </configuration>
       </plugin>
     </plugins>
+    <finalName>webrtc-backend</finalName>
   </build>
 </project>
